@@ -26,17 +26,13 @@
             />
             <button
                     id="connect"
-                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
             >
                 Connect
             </button>
         </div>
 
-        <textarea
-                id="chat"
-                class="w-full border rounded-md px-4 py-2 bg-gray-50 focus:outline-none focus:ring focus:ring-blue-300"
-                readonly
-        ></textarea>
+        <div id="chat" class="w-full border rounded-md px-4 py-2 bg-gray-50 focus:outline-none focus:ring focus:ring-blue-300 overflow-y-auto"></div>
 
         <div class="flex items-center gap-2 mt-4">
             <input
@@ -47,7 +43,7 @@
             />
             <button
                     id="send"
-                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
                     disabled
             >
                 Send
@@ -57,7 +53,6 @@
 </div>
 
 <script type="text/javascript">
-
     var connected = false;
     var socket;
 
@@ -97,8 +92,21 @@
             };
 
             socket.onmessage = function (m) {
-                var chatBox = document.getElementById("chat");
-                chatBox.value += m.data + "\n";
+                const data = JSON.parse(m.data);
+                const { username, icon, message } = data;
+
+                const chatBox = document.getElementById("chat");
+                const formattedMessage = `
+                    <div class="flex items-center mb-2">
+                        <div class="flex items-center justify-center w-7 h-7 rounded-full bg-blue-700 text-white font-bold mr-3">
+                            ${icon}
+                        </div>
+                        <div>
+                            <strong>${username}:</strong> ${message}
+                        </div>
+                    </div>
+                `;
+                chatBox.innerHTML += formattedMessage;
                 chatBox.scrollTop = chatBox.scrollHeight;
             };
         }

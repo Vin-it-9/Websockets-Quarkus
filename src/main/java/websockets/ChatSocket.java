@@ -22,42 +22,41 @@ public class ChatSocket {
 
     Map<String, Session> sessions = new ConcurrentHashMap<>();
 
-
     @OnOpen
     public void onOpen(Session session, @PathParam("username") String username) {
         sessions.put(username, session);
+        broadcast(username, "joined the chat.");
     }
 
     @OnClose
     public void onClose(Session session, @PathParam("username") String username) {
         sessions.remove(username);
-        broadcast("User " + username + " left");
+        broadcast(username, "left the chat.");
     }
 
     @OnError
     public void onError(Session session, @PathParam("username") String username, Throwable throwable) {
         sessions.remove(username);
-        LOG.error("onError", throwable);
-        broadcast("User " + username + " left on error: " + throwable);
+        LOG.error("Error for user " + username, throwable);
+        broadcast(username, "left due to an error.");
     }
 
     @OnMessage
     public void onMessage(String message, @PathParam("username") String username) {
-        if (message.equalsIgnoreCase("_ready_")) {
-            broadcast("User " + username + " joined");
-        } else {
-            broadcast(username + ": " + message);
-        }
+        broadcast(username, message);
     }
 
-    private void broadcast(String message) {
-        sessions.values().forEach(s -> {
-            s.getAsyncRemote().sendObject(message, result -> {
-                if (result.getException() != null) {
-                    System.out.println("Unable to send message: " + result.getException());
-                }
-            });
+    private void broadcast(String username, String message) {
+        String icon = username.substring(0, 1).toUpperCase();
+        sessions.values().forEach(session -> {
+            try {
+                session.getAsyncRemote().sendText(String.format(
+                        "{\"username\":\"%s\", \"icon\":\"%s\", \"message\":\"%s\"}",
+                        username, icon, message
+                ));
+            } catch (Exception e) {
+                LOG.error("Broadcast failed for user " + username, e);
+            }
         });
     }
-
 }
