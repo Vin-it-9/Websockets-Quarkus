@@ -48,6 +48,7 @@ public class ChatSocket {
 
     private void broadcast(String username, String message) {
         String icon = username.substring(0, 1).toUpperCase();
+
         sessions.values().forEach(session -> {
             try {
                 session.getAsyncRemote().sendText(String.format(
