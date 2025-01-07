@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarkus ChatApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #chat {
+            resize: none;
+            overflow-y: auto;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+<div class="container mx-auto p-6 max-w-lg">
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4 text-center">Quarkus Chat</h1>
+        <div class="flex items-center gap-2 mb-4">
+            <input
+                    id="name"
+                    type="text"
+                    placeholder="Your name"
+                    class="w-full border rounded-md px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+            />
+            <button
+                    id="connect"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50"
+            >
+                Connect
+            </button>
+        </div>
+
+        <textarea
+                id="chat"
+                class="w-full border rounded-md px-4 py-2 bg-gray-50 focus:outline-none focus:ring focus:ring-blue-300"
+                readonly
+        ></textarea>
+
+        <div class="flex items-center gap-2 mt-4">
+            <input
+                    id="msg"
+                    type="text"
+                    placeholder="Enter your message"
+                    class="w-full border rounded-md px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+            />
+            <button
+                    id="send"
+                    class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition disabled:opacity-50"
+                    disabled
+            >
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    var connected = false;
+    var socket;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("connect").addEventListener("click", connect);
+        document.getElementById("send").addEventListener("click", sendMessage);
+
+        document.getElementById("name").addEventListener("keypress", function (event) {
+            if (event.keyCode === 13 || event.which === 13) {
+                connect();
+            }
+        });
+
+        document.getElementById("msg").addEventListener("keypress", function (event) {
+            if (event.keyCode === 13 || event.which === 13) {
+                sendMessage();
+            }
+        });
+    });
+
+    var connect = function () {
+        if (!connected) {
+            var name = document.getElementById("name").value;
+            if (name.trim() === "") {
+                alert("Please enter your name.");
+                return;
+            }
+
+            socket = new WebSocket("ws://" + location.host + "/chat/" + name);
+
+            socket.onopen = function () {
+                connected = true;
+                document.getElementById("send").disabled = false;
+                document.getElementById("connect").disabled = true;
+                document.getElementById("name").disabled = true;
+                document.getElementById("msg").focus();
+            };
+
+            socket.onmessage = function (m) {
+                var chatBox = document.getElementById("chat");
+                chatBox.value += m.data + "\n";
+                chatBox.scrollTop = chatBox.scrollHeight;
+            };
+        }
+    };
+
+    var sendMessage = function () {
+        if (connected) {
+            var value = document.getElementById("msg").value;
+            if (value.trim() === "") {
+                alert("Please enter a message.");
+                return;
+            }
+            socket.send(value);
+            document.getElementById("msg").value = "";
+        }
+    };
+</script>
+</body>
+</html>
