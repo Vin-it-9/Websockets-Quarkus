@@ -26,7 +26,9 @@ var connect = function () {
             return;
         }
 
-        socket = new WebSocket("ws://" + location.host + "/chat/" + name);
+        // Use secure WebSocket protocol if page is loaded over HTTPS
+        var wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        socket = new WebSocket(wsProtocol + location.host + "/chat/" + name);
 
         socket.onopen = function () {
             connected = true;
@@ -53,6 +55,19 @@ var connect = function () {
                 `;
             chatBox.innerHTML += formattedMessage;
             chatBox.scrollTop = chatBox.scrollHeight;
+        };
+        
+        socket.onerror = function(error) {
+            console.error("WebSocket error:", error);
+            alert("Failed to connect to the chat server. Please try again later.");
+        };
+        
+        socket.onclose = function(event) {
+            connected = false;
+            document.getElementById("send").disabled = true;
+            document.getElementById("connect").disabled = false;
+            document.getElementById("name").disabled = false;
+            console.log("WebSocket connection closed:", event.code, event.reason);
         };
     }
 };
